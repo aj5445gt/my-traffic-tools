@@ -4,127 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 全台即時高流量題材觀測雷達</title>
-    <!-- 引入 Tailwind CSS 視覺框架 -->
-    <script src="https://tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cloudflare.com">
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+    <style>
+        /* 直接將黑藍色科技感視覺寫入網頁，防攔截 */
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+        header {
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        section {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h1 { margin: 0; font-size: 22px; font-weight: bold; color: #ffffff; }
+        h2 { margin: 0 0 15px 0; font-size: 18px; font-weight: bold; color: #f8fafc; }
+        p { color: #94a3b8; font-size: 14px; margin-top: 5px; margin-bottom: 15px; }
+        
+        /* 按鈕網格排版 */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .btn-card {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
+            text-decoration: none;
+            color: #f1f5f9;
+            transition: all 0.2s;
+            display: block;
+        }
+        .btn-card:hover {
+            border-color: #6366f1;
+            background-color: #1e1b4b;
+        }
+        .card-title { font-weight: bold; color: #ffff; margin-bottom: 4px; }
+        .card-desc { font-size: 12px; color: #94a3b8; }
+        
+        /* 靈感庫排版 */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .list-box {
+            background-color: rgba(15, 23, 42, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .list-box ul { list-style: none; padding: 0; margin: 0; }
+        .list-box li { font-size: 14px; color: #cbd5e1; margin-bottom: 8px; }
+        .tag-green { color: #34d399; font-weight: bold; margin-bottom: 10px; }
+        .tag-amber { color: #fbbf24; font-weight: bold; margin-bottom: 10px; }
+        .tag-purple { color: #c084fc; font-weight: bold; margin-bottom: 10px; }
 
-    <!-- 頂部導航欄 -->
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 shadow-lg">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 p-2 rounded-lg text-white animate-pulse">
-                    <i class="fa-solid fa-radar fa-lg"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide">流量觀測雷達 v1.0</h1>
-                    <p class="text-xs text-slate-400">2026 網路變現專專用版</p>
-                </div>
-            </div>
-            <div class="text-sm text-slate-300 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-700">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-ping"></span>
-                系統就緒：即時數據源已串接
-            </div>
+        /* 輸入框與生成器 */
+        .input-group { display: flex; gap: 10px; margin-top: 15px; }
+        input {
+            flex: 1;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #6366f1; }
+        button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #4338ca; }
+        
+        /* 結果區域 */
+        .result-area { margin-top: 20px; display: none; }
+        textarea {
+            width: 100%;
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 15px;
+            color: #34d399;
+            font-family: monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+            resize: none;
+        }
+        .copy-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .copy-btn { background-color: #334155; font-size: 12px; padding: 6px 12px; border-radius: 6px; }
+        .copy-btn:hover { background-color: #475569; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>流量觀測雷達 v1.1</h1>
+            <div style="font-size: 12px; color: #94a3b8;">2026 網路變現防攔截專用版</div>
+        </div>
+        <div style="font-size: 13px; color: #34d399; background: rgba(15,23,42,0.5); padding: 5px 12px; border-radius: 20px; border: 1px solid #334155;">
+            ● 系統狀態：100% 本地獨立運行
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div class="container">
         
-        <!-- 區塊 1：即時爆發流量觀測台 -->
-        <section class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
-            <div class="flex items-center gap-2 mb-6">
-                <i class="fa-solid fa-fire text-amber-500 text-xl"></i>
-                <h2 class="text-lg font-bold">第一步：即時時事流量觀測（點擊直接前往）</h2>
-            </div>
-            <p class="text-slate-400 text-sm mb-4">點擊以下按鈕前往台灣各大流量發源地，尋找今天搜尋量破萬、大家都在討論的爆款話題：</p>
+        <!-- 區塊 1 -->
+        <section>
+            <h2>第一步：即時時事流量觀測（點擊直接前往）</h2>
+            <p>前往台灣各大流量發源地，尋找今天搜尋量破萬、大家都在討論的爆款話題：</p>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="https://google.com.tw" target="_blank" class="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-700 hover:border-indigo-500 hover:bg-slate-900 transition group">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-brands fa-google text-blue-500 text-2xl"></i>
-                        <div>
-                            <div class="font-semibold group-hover:text-indigo-400 transition">Google 每日趨勢</div>
-                            <div class="text-xs text-slate-400">查看今日最高搜尋詞</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-500 text-xs"></i>
+            <div class="grid-4">
+                <a href="https://google.com.tw" target="_blank" class="btn-card">
+                    <div class="card-title">Google 每日趨勢 ↗</div>
+                    <div class="card-desc">查看今日最高搜尋關鍵字</div>
                 </a>
-
-                <a href="https://threads.net" target="_blank" class="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-700 hover:border-indigo-500 hover:bg-slate-900 transition group">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-brands fa-threads text-white text-2xl"></i>
-                        <div>
-                            <div class="font-semibold group-hover:text-indigo-400 transition">Threads 熱門脆</div>
-                            <div class="text-xs text-slate-400">脆友當下最火碎念話題</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-500 text-xs"></i>
+                <a href="https://threads.net" target="_blank" class="btn-card">
+                    <div class="card-title">Threads 熱門脆 ↗</div>
+                    <div class="card-desc">觀察大眾當下最火碎念話題</div>
                 </a>
-
-                <a href="https://dcard.tw" target="_blank" class="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-700 hover:border-indigo-500 hover:bg-slate-900 transition group">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-square-d text-sky-500 text-2xl"></i>
-                        <div>
-                            <div class="font-semibold group-hover:text-indigo-400 transition">Dcard 時事與熱門</div>
-                            <div class="text-xs text-slate-400">年輕族群關注焦點</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-500 text-xs"></i>
+                <a href="https://dcard.tw" target="_blank" class="btn-card">
+                    <div class="card-title">Dcard 時事熱門 ↗</div>
+                    <div class="card-desc">掌握年輕族群關注焦點</div>
                 </a>
-
-                <a href="https://ptt.cc" target="_blank" class="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-700 hover:border-indigo-500 hover:bg-slate-900 transition group">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-p text-red-500 text-2xl"></i>
-                        <div>
-                            <div class="font-semibold group-hover:text-indigo-400 transition">PTT 省錢板 (剛需)</div>
-                            <div class="text-xs text-slate-400">民生補助與好康情報</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-500 text-xs"></i>
+                <a href="https://ptt.cc" target="_blank" class="btn-card">
+                    <div class="card-title">PTT 省錢板 ↗</div>
+                    <div class="card-desc">民生補助與各類好康情報</div>
                 </a>
             </div>
         </section>
 
-        <!-- 區塊 2：長青利基靈感庫 -->
-        <section class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
-            <div class="flex items-center gap-2 mb-4">
-                <i class="fa-solid fa-gem text-indigo-500 text-xl"></i>
-                <h2 class="text-lg font-bold">長青高流量工具型題材（靈感庫）</h2>
-            </div>
-            <p class="text-slate-400 text-sm mb-6">除了追逐時事，這些功能單一的小工具天天都有穩定的大量長尾搜尋流量：</p>
+        <!-- 區塊 2 -->
+        <section>
+            <h2>長青高流量工具型題材（靈感庫）</h2>
+            <p>除了追逐時事，這些功能單一的小工具天天都有穩定的大量長尾搜尋流量：</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- 生活類 -->
-                <div class="bg-slate-900/40 p-5 rounded-xl border border-slate-700/60">
-                    <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-3">
-                        <i class="fa-solid fa-house-user"></i> 生活政策民生
-                    </div>
-                    <ul class="space-y-2 text-sm text-slate-300">
+            <div class="grid-3">
+                <div class="list-box">
+                    <div class="tag-green">■ 生活政策民生</div>
+                    <ul>
                         <li>• 各縣市租屋/育兒補助試算</li>
                         <li>• 最新汽機車交通違規罰單新制</li>
                         <li>• 綜合所得稅/節稅快速計算器</li>
                         <li>• 連假請假請休攻略行事曆</li>
                     </ul>
                 </div>
-                <!-- 金融類 -->
-                <div class="bg-slate-900/40 p-5 rounded-xl border border-slate-700/60">
-                    <div class="flex items-center gap-2 text-amber-400 font-semibold mb-3">
-                        <i class="fa-solid fa-coins"></i> 高點擊單價理財
-                    </div>
-                    <ul class="space-y-2 text-sm text-slate-300">
+                <div class="list-box">
+                    <div class="tag-amber">■ 高點擊單價理財</div>
+                    <ul>
                         <li>• 各大數位帳戶高利活存比較</li>
                         <li>• 房屋/個人信貸月付額試算器</li>
                         <li>• 虛擬貨幣海外提現手續費計算</li>
                         <li>• 勞退新制分紅與退休金估算</li>
                     </ul>
                 </div>
-                <!-- 數位轉換類 -->
-                <div class="bg-slate-900/40 p-5 rounded-xl border border-slate-700/60">
-                    <div class="flex items-center gap-2 text-purple-400 font-semibold mb-3">
-                        <i class="fa-solid fa-laptop-code"></i> 數位辦公工具
-                    </div>
-                    <ul class="space-y-2 text-sm text-slate-300">
+                <div class="list-box">
+                    <div class="tag-purple">■ 數位辦公工具</div>
+                    <ul>
                         <li>• 線上圖片無損壓縮器 (WebP)</li>
                         <li>• 免費 QR Code 帶 Logo 產生器</li>
                         <li>• 文章字數與全半形轉換器</li>
@@ -134,37 +198,63 @@
             </div>
         </section>
 
-        <!-- 區塊 3：AI 提示詞發射台 -->
-        <section class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 bg-indigo-600/10 w-64 h-64 rounded-full blur-3xl -z-10"></div>
+        <!-- 區塊 3 -->
+        <section>
+            <h2>第二步：AI 網頁提示詞快速生成器</h2>
+            <label style="font-size: 14px; color: #cbd5e1;">請輸入您在第一步找到的【熱門流量關鍵字】（例如：2026租屋補助試算）</label>
             
-            <div class="flex items-center gap-2 mb-6">
-                <i class="fa-solid fa-wand-magic-sparkles text-violet-400 text-xl"></i>
-                <h2 class="text-lg font-bold">第二步：AI 網頁提示詞快速生成器</h2>
+            <div class="input-group">
+                <input type="text" id="keywordInput" placeholder="例如：2026勞退分紅計算器">
+                <button onclick="generatePrompt()">生成提示詞</button>
             </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">請輸入您在第一步找到的【熱門流量關鍵字】（例如：2026租屋補助試算）</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="keywordInput" placeholder="例如：2026勞退分紅計算器" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-indigo-500 transition shadow-inner">
-                        <button onclick="generatePrompt()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg active:scale-95">
-                            <i class="fa-solid fa-gear"></i> 生成提示詞
-                        </button>
-                    </div>
-                </div>
 
-                <div id="resultArea" class="hidden space-y-2 animate-fadeIn">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">已為您精心優化的 AI 指令 (複製後直接貼給 Claude / ChatGPT)：</span>
-                        <button onclick="copyPrompt()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1 active:scale-95">
-                            <i class="fa-solid fa-copy"></i> <span id="copyBtnText">一鍵複製</span>
-                        </button>
-                    </div>
-                    <textarea id="promptOutput" rows="12" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm font-mono text-emerald-400 focus:outline-none resize-none shadow-inner" readonly></textarea>
+            <div id="resultArea" class="result-area">
+                <div class="copy-bar">
+                    <span style="font-size: 12px; color: #818cf8;">已為您優化的 AI 指令（直接貼給 Claude / ChatGPT）：</span>
+                    <button onclick="copyPrompt()" class="copy-btn" id="copyBtnText">一鍵複製</button>
                 </div>
+                <textarea id="promptOutput" rows="12" readonly></textarea>
             </div>
         </section>
-    </main>
+    </div>
 
-    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-500 border-t border-slate-800 mt-12">
+    <div style="text-align: center; font-size: 12px; color: #475569; margin-top: 40px; padding-bottom: 30px;">
+        © 2026 流量變現研究室. 祝您快速變現成功。
+    </div>
+
+    <script>
+        function generatePrompt() {
+            const keyword = document.getElementById('keywordInput').value.trim();
+            if (!keyword) {
+                alert('請先輸入一個想做的流量關鍵字題材喔！');
+                return;
+            }
+
+            const promptTemplate = `你現在是一位精通流量變現與使用者體驗（UX）的資深前端工程師。我目前在台灣市場鎖定了【${keyword}】這個超高流量的熱門題材，請幫我寫一個單頁式（Single Page）的精美工具網頁，幫使用者解決這個痛點，以便我快速掛廣告變現。
+
+項目技術與功能規格需求：
+1. 【前端美化】：請「直接將所有 CSS 樣式寫在網頁頂部的 <style> 標籤內」，不要依賴外部 Tailwind CSS 連結，確保網頁能 100% 獨立防攔截運作。介面設計要非常現代、乾淨、直覺，且完美適應手機版螢幕。
+2. 【核心功能】：請用純 JavaScript 在網頁內實作一個「${keyword}」的互動功能。包含清晰的輸入欄位、漂亮的執行按鈕，以及顯眼流暢的結果展示區域。
+3. 【變現廣告版位】：請在網頁結構中的以下 3 個地方，預留灰色背景的廣告欄位佔位符（外框標示「廣告贊助」字樣），並在代碼中附上 HTML 註解：
+   - 地方 A：網頁最頂部（導航欄下方）
+   - 地方 B：核心工具的功能送出按鈕正下方
+   - 地方 C：網頁最底部
+4. 【SEO 基礎設定】：請在網頁的 <title> 與 <h1> 標題中優化包含「${keyword}」以及「最新、免費、線上快速試算」等吸引點擊的文案。
+
+請直接輸出完整、無瑕疵、可直接執行的 HTML 程式碼（包含內嵌的 CSS 與 JavaScript 邏輯），不需要任何額外的說明文字。`;
+
+            document.getElementById('promptOutput').value = promptTemplate;
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('copyBtnText').innerText = '一鍵複製';
+        }
+
+        function copyPrompt() {
+            const copyText = document.getElementById('promptOutput');
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            document.getElementById('copyBtnText').innerText = '複製成功！';
+            setTimeout(() => { document.getElementById('copyBtnText').innerText = '一鍵複製'; }, 2000);
+        }
+    </script>
+</body>
+</html>
