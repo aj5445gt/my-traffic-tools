@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 全台即時高流量題材觀測雷達</title>
+    <title>2026 全台與歐亞即時高流量題材觀測雷達</title>
     <style>
         /* 直接將黑藍色科技感視覺寫入網頁，防攔截 */
         body {
@@ -80,6 +80,28 @@
         .tag-amber { color: #fbbf24; font-weight: bold; margin-bottom: 10px; }
         .tag-purple { color: #c084fc; font-weight: bold; margin-bottom: 10px; }
 
+        /* 動態資料清單樣式 */
+        .trend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .trend-item:hover {
+            border-color: #4f46e5;
+        }
+        .trend-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .badge-region { background: #334155; color: #cbd5e1; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+        .badge-cat { color: #818cf8; font-size: 12px; font-weight: bold; }
+        .trend-link { color: #f1f5f9; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .trend-link:hover { color: #818cf8; text-decoration: underline; }
+        .trend-traffic { color: #34d399; font-size: 13px; font-weight: bold; white-space: nowrap; }
+
         /* 輸入框與生成器 */
         .input-group { display: flex; gap: 10px; margin-top: 15px; }
         input {
@@ -127,16 +149,25 @@
 
     <header>
         <div>
-            <h1>流量觀測雷達 v1.1</h1>
-            <div style="font-size: 12px; color: #94a3b8;">2026 網路變現防攔截專用版</div>
+            <h1>流量觀測雷達 v2.0</h1>
+            <div style="font-size: 12px; color: #94a3b8;">2026 歐亞即時趨勢與變現防攔截專用版</div>
         </div>
         <div style="font-size: 13px; color: #34d399; background: rgba(15,23,42,0.5); padding: 5px 12px; border-radius: 20px; border: 1px solid #334155;">
-            ● 系統狀態：100% 本地獨立運行
+            ● 系統狀態：即時資料連線中
         </div>
     </header>
 
     <div class="container">
         
+        <!-- 新增區塊：歐亞自動化即時趨勢看板 -->
+        <section>
+            <h2>🔥 歐亞區自動化即時趨勢看板（Google Sheets 聯動）</h2>
+            <p>透過後台自動化爬蟲與翻譯，實時掌握台灣、日本、韓國與歐洲最新高流量題材：</p>
+            <div id="trend-container" style="color: #94a3b8; font-style: italic;">
+                正在從雲端資料庫載入即時趨勢數據...
+            </div>
+        </section>
+
         <!-- 區塊 1 -->
         <section>
             <h2>第一步：即時時事流量觀測（點擊直接前往）</h2>
@@ -201,7 +232,7 @@
         <!-- 區塊 3 -->
         <section>
             <h2>第二步：AI 網頁提示詞快速生成器</h2>
-            <label style="font-size: 14px; color: #cbd5e1;">請輸入您在第一步找到的【熱門流量關鍵字】（例如：2026租屋補助試算）</label>
+            <label style="font-size: 14px; color: #cbd5e1;">請輸入您在雷達或靈感庫找到的【熱門流量關鍵字】（例如：2026租屋補助試算）</label>
             
             <div class="input-group">
                 <input type="text" id="keywordInput" placeholder="例如：2026勞退分紅計算器">
@@ -223,6 +254,72 @@
     </div>
 
     <script>
+        // 【關鍵】請將下方引號內的網址替換為你稍早在 Google Sheets 點擊「發佈到網路」所取得的 CSV 網址
+        const csvUrl = 'YOUR_GOOGLE_SHEETS_CSV_URL_HERE';
+
+        async function loadTrends() {
+            const container = document.getElementById('trend-container');
+            
+            // 如果還沒設定網址，先給予友善提示
+            if (csvUrl.includes('YOUR_GOOGLE_SHEETS_CSV_URL_HERE')) {
+                container.innerHTML = '✨ 系統架構已就緒！請將 Google Sheets 的「發佈到網路 CSV 網址」填入程式碼中的 <code>csvUrl</code> 變數即可開始顯示即時資料。';
+                return;
+            }
+
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                
+                // 簡單解析 CSV (處理換行與逗號)
+                const rows = csvText.split('\n').map(row => {
+                    return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(',');
+                });
+
+                if (rows.length <= 1) {
+                    container.innerHTML = '目前資料庫尚無即時數據，請等待 Make 自動化寫入或手動新增資料。';
+                    return;
+                }
+                
+                let html = '';
+                // 從第二行開始讀取（跳過表頭），最多顯示最新 10 筆
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i];
+                    if (cols && cols.length >= 7) {
+                        // 清理引號
+                        const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+                        
+                        const region = clean(cols[1]);
+                        const keyword = clean(cols[3]); // 中文翻譯關鍵字
+                        const category = clean(cols[4]); // 分類
+                        const traffic = clean(cols[5]);  // 熱度流量
+                        const link = clean(cols[6]);     // 新聞來源連結
+
+                        if (keyword) {
+                            html += `
+                                <div class="trend-item">
+                                    <div class="trend-info">
+                                        <span class="badge-region">${region || '全球'}</span>
+                                        <span class="badge-cat">${category || '[綜合]'}</span>
+                                        <a href="${link || '#'}" target="_blank" class="trend-link">${keyword}</a>
+                                    </div>
+                                    <div class="trend-traffic">🔥 ${traffic || '熱搜中'}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                container.innerHTML = html ? html : '目前沒有符合顯示條件的資料。';
+            } catch (error) {
+                container.innerHTML = '無法讀取雲端資料庫，請確認 Google Sheets 權限是否已設定為「發佈到網路」。';
+                console.error('載入失敗:', error);
+            }
+        }
+
+        // 網頁載入後自動執行讀取
+        loadTrends();
+
+        // 原有的 AI 提示詞生成邏輯
         function generatePrompt() {
             const keyword = document.getElementById('keywordInput').value.trim();
             if (!keyword) {
