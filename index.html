@@ -101,6 +101,21 @@
         .trend-link { color: #f1f5f9; text-decoration: none; font-weight: 500; font-size: 14px; }
         .trend-link:hover { color: #818cf8; text-decoration: underline; }
         .trend-traffic { color: #34d399; font-size: 13px; font-weight: bold; white-space: nowrap; }
+        /* 設定趨勢看板固定最大高度與內部滾動，防止撐爆版面 */
+#trend-container {
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* 美化滾動條 */
+#trend-container::-webkit-scrollbar {
+    width: 6px;
+}
+#trend-container::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
 
         /* 輸入框與生成器 */
         .input-group { display: flex; gap: 10px; margin-top: 15px; }
@@ -283,11 +298,10 @@
             return result;
         }
 
-        async function loadTrends() {
+async function loadTrends() {
             const container = document.getElementById('trend-container');
 
             try {
-                // 加上時間戳記防止瀏覽器 Cache 舊資料
                 const response = await fetch(csvUrl + '&t=' + new Date().getTime());
                 const csvText = await response.text();
                 
@@ -299,12 +313,14 @@
                 }
                 
                 let html = '';
-                // 跳過表頭（i = 1），讀取最新資料
-                for (let i = 1; i < rows.length; i++) {
+                // 【關鍵修改】限制最多只讀取顯示最新 15 筆資料
+                const limitCount = Math.min(rows.length, 16);
+
+                for (let i = 1; i < limitCount; i++) {
                     const cols = rows[i];
                     if (cols && cols.length >= 6) {
                         const region = cols[1] || 'TW';          // B欄：來源/地區
-                        const summary = cols[3] || cols[2];     // D欄：中文摘要 (若無則取原標題)
+                        const summary = cols[3] || cols[2];     // D欄：中文摘要
                         const category = cols[4] || '綜合';      // E欄：分類
                         const traffic = cols[5] || '最新';       // F欄：標籤/熱度
                         const link = cols[6] || '#';            // G欄：連結
