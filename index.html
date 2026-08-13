@@ -254,26 +254,44 @@
     </div>
 
     <script>
-        // 【關鍵】請將下方引號內的網址替換為你稍早在 Google Sheets 點擊「發佈到網路」所取得的 CSV 網址
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAVb-yArXFeN0RkeJUZdxBeYjfNDa6MbcQ4Xau3e-uaJE2XzrPO8YAOinIlBAB9-s8O7UcAmochdts/pubhtml?gid=0&single=true;"
+        // 【已修正】將網址改為標準 output=csv 格式，並移除末端分號
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAVb-yArXFeN0RkeJUZdxBeYjfNDa6MbcQ4Xau3e-uaJE2XzrPO8YAOinIlBAB9-s8O7UcAmochdts/pub?gid=0&single=true&output=csv";
+
+        // 穩健型 CSV 解析器（防止摘要內的逗號導致欄位錯位）
+        function parseCSV(text) {
+            const lines = text.split(/\r\n|\n/);
+            const result = [];
+            for (let line of lines) {
+                if (!line.trim()) continue;
+                let row = [];
+                let insideQuote = false;
+                let entry = '';
+                for (let i = 0; i < line.length; i++) {
+                    let char = line[i];
+                    if (char === '"') {
+                        insideQuote = !insideQuote;
+                    } else if (char === ',' && !insideQuote) {
+                        row.push(entry.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                        entry = '';
+                    } else {
+                        entry += char;
+                    }
+                }
+                row.push(entry.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                result.push(row);
+            }
+            return result;
+        }
 
         async function loadTrends() {
             const container = document.getElementById('trend-container');
-            
-            // 如果還沒設定網址，先給予友善提示
-            if (csvUrl.includes('YOUR_GOOGLE_SHEETS_CSV_URL_HERE')) {
-                container.innerHTML = '✨ 系統架構已就緒！請將 Google Sheets 的「發佈到網路 CSV 網址」填入程式碼中的 <code>csvUrl</code> 變數即可開始顯示即時資料。';
-                return;
-            }
 
             try {
-                const response = await fetch(csvUrl);
+                // 加載時加上快取清除，確保每次都能抓到 Make 寫入的最新資料
+                const response = await fetch(csvUrl + '&t=' + new Date().getTime());
                 const csvText = await response.text();
                 
-                // 簡單解析 CSV (處理換行與逗號)
-                const rows = csvText.split('\n').map(row => {
-                    return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(',');
-                });
+                const rows = parseCSV(csvText);
 
                 if (rows.length <= 1) {
                     container.innerHTML = '目前資料庫尚無即時數據，請等待 Make 自動化寫入或手動新增資料。';
@@ -281,28 +299,25 @@
                 }
                 
                 let html = '';
-                // 從第二行開始讀取（跳過表頭），最多顯示最新 10 筆
+                // 從第二行開始（跳過表頭），最多顯示最新的 15 筆
                 for (let i = 1; i < rows.length; i++) {
                     const cols = rows[i];
-                    if (cols && cols.length >= 7) {
-                        // 清理引號
-                        const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
-                        
-                        const region = clean(cols[1]);
-                        const keyword = clean(cols[3]); // 中文翻譯關鍵字
-                        const category = clean(cols[4]); // 分類
-                        const traffic = clean(cols[5]);  // 熱度流量
-                        const link = clean(cols[6]);     // 新聞來源連結
+                    if (cols && cols.length >= 6) {
+                        const region = cols[1] || 'TW';          // B欄：來源/地區
+                        const summary = cols[3] || cols[2];     // D欄：中文摘要 (若無則取原標題)
+                        const category = cols[4] || '綜合';      // E欄：分類
+                        const traffic = cols[5] || '最新';       // F欄：標籤/熱度
+                        const link = cols[6] || '#';            // G欄：連結
 
-                        if (keyword) {
+                        if (summary) {
                             html += `
                                 <div class="trend-item">
                                     <div class="trend-info">
-                                        <span class="badge-region">${region || '全球'}</span>
-                                        <span class="badge-cat">${category || '[綜合]'}</span>
-                                        <a href="${link || '#'}" target="_blank" class="trend-link">${keyword}</a>
+                                        <span class="badge-region">${region}</span>
+                                        <span class="badge-cat">[${category}]</span>
+                                        <a href="${link}" target="_blank" class="trend-link">${summary}</a>
                                     </div>
-                                    <div class="trend-traffic">🔥 ${traffic || '熱搜中'}</div>
+                                    <div class="trend-traffic">🔥 ${traffic}</div>
                                 </div>
                             `;
                         }
@@ -311,7 +326,7 @@
                 
                 container.innerHTML = html ? html : '目前沒有符合顯示條件的資料。';
             } catch (error) {
-                container.innerHTML = '無法讀取雲端資料庫，請確認 Google Sheets 權限是否已設定為「發佈到網路」。';
+                container.innerHTML = '無法讀取雲端資料庫，請確認 Google Sheets 發布狀態。';
                 console.error('載入失敗:', error);
             }
         }
@@ -319,7 +334,7 @@
         // 網頁載入後自動執行讀取
         loadTrends();
 
-        // 原有的 AI 提示詞生成邏輯
+        // AI 提示詞生成邏輯
         function generatePrompt() {
             const keyword = document.getElementById('keywordInput').value.trim();
             if (!keyword) {
