@@ -59,7 +59,7 @@
             border-color: #6366f1;
             background-color: #1e1b4b;
         }
-        .card-title { font-weight: bold; color: #ffff; margin-bottom: 4px; }
+        .card-title { font-weight: bold; color: #ffffff; margin-bottom: 4px; }
         .card-desc { font-size: 12px; color: #94a3b8; }
         
         /* 靈感庫排版 */
@@ -159,7 +159,7 @@
 
     <div class="container">
         
-        <!-- 新增區塊：歐亞自動化即時趨勢看板 -->
+        <!-- 自動化即時趨勢看板 -->
         <section>
             <h2>🔥 歐亞區自動化即時趨勢看板（Google Sheets 聯動）</h2>
             <p>透過後台自動化爬蟲與翻譯，實時掌握台灣、日本、韓國與歐洲最新高流量題材：</p>
@@ -254,10 +254,10 @@
     </div>
 
     <script>
-        // 【已修正】將網址改為標準 output=csv 格式，並移除末端分號
+        // 【已修正】匯出 CSV 標準 URL，並移除末端分號
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAVb-yArXFeN0RkeJUZdxBeYjfNDa6MbcQ4Xau3e-uaJE2XzrPO8YAOinIlBAB9-s8O7UcAmochdts/pub?gid=0&single=true&output=csv";
 
-        // 穩健型 CSV 解析器（防止摘要內的逗號導致欄位錯位）
+        // 穩健型 CSV 解析邏輯（防引號與逗號干擾）
         function parseCSV(text) {
             const lines = text.split(/\r\n|\n/);
             const result = [];
@@ -287,7 +287,7 @@
             const container = document.getElementById('trend-container');
 
             try {
-                // 加載時加上快取清除，確保每次都能抓到 Make 寫入的最新資料
+                // 加上時間戳記防止瀏覽器 Cache 舊資料
                 const response = await fetch(csvUrl + '&t=' + new Date().getTime());
                 const csvText = await response.text();
                 
@@ -299,7 +299,7 @@
                 }
                 
                 let html = '';
-                // 從第二行開始（跳過表頭），最多顯示最新的 15 筆
+                // 跳過表頭（i = 1），讀取最新資料
                 for (let i = 1; i < rows.length; i++) {
                     const cols = rows[i];
                     if (cols && cols.length >= 6) {
@@ -331,7 +331,7 @@
             }
         }
 
-        // 網頁載入後自動執行讀取
+        // 自動執行載入
         loadTrends();
 
         // AI 提示詞生成邏輯
